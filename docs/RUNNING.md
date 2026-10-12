@@ -18,12 +18,16 @@ The build needs three third-party copyrighted components, kept in a separate **p
 
 ```
 vendor/include/   Amiga 1.3 NDK assembler headers (*.i)
-vendor/libs/      mathtrans.library
+vendor/libs/      mathtrans.library                          <- OPTIONAL fallback (free replacement built by default; see below)
 vendor/rom/       kick13.rom   (Kickstart 1.3,  r34.5)     <- required (the demo's native OS)
 vendor/rom/       kick204.rom  (Kickstart 2.04, r37.175)   <- optional (becomes the default boot ROM when present)
 ```
 
-`git submodule update --init` fetches them if you have access. Otherwise supply your own in that layout (NDK 1.3 + the Kickstart ROMs from Cloanto Amiga Forever — **1.3 required, 2.04 optional**; `mathtrans.library` from a Workbench 1.3 disk). `build.sh` requires the 1.3 ROM, and uses 2.04 as the default boot ROM when it's present (otherwise it falls back to 1.3); it reports exactly what's missing. **The ROMs live here** — there's no dependency on FS-UAE's own `Kickstarts/` folder.
+`git submodule update --init` fetches them if you have access. Otherwise supply your own in that layout (NDK 1.3 + the Kickstart ROMs from Cloanto Amiga Forever — **1.3 required, 2.04 optional**). `build.sh` requires the 1.3 ROM, and uses 2.04 as the default boot ROM when it's present (otherwise it falls back to 1.3); it reports exactly what's missing. **The ROMs live here** — there's no dependency on FS-UAE's own `Kickstarts/` folder.
+
+`mathtrans.library` is **not** taken from `vendor/` by default: the build compiles a free, redistributable replacement from [`../mathtrans/`](../mathtrans/) (AROS-derived, APL) and stages *that*, so a built run target / ADF can be shared publicly. `vendor/libs/mathtrans.library` (Commodore/Hyperion, not redistributable) is used only as a fallback when the free build is unavailable or the C toolchain is missing — and `build.sh` then warns that the result is not redistributable. Force either side with `MATHTRANS_LIB=free|vendor`. Build/design notes: [`../mathtrans/DEBUGGING.md`](../mathtrans/DEBUGGING.md).
+
+If you can only supply **NDK 3.2+** headers, that also builds: `build.sh` detects the newer layout (`lvo/` present, `graphics/graphics_lib.i` absent) and prepends the committed `compat/` include layer, which maps the NDK 1.3 include paths used by `src/boing.s` onto NDK 3.2's `lvo/*.i` (NDK 3.2's `*_lib.i` otherwise fail on an undefined `FUNCDEF` macro). The demo only needs the `_LVO*` equates, so the mapping is complete. A genuine NDK 1.3 `vendor/include/` is used as-is, with no compat layer.
 
 ## Toolchain
 
@@ -35,6 +39,8 @@ vendor/rom/       kick204.rom  (Kickstart 2.04, r37.175)   <- optional (becomes 
 
 (The copies under the extension's `dist/wasm/` are WebAssembly and won't run from a normal shell — the script uses the `resources/bin/<platform>/` native ones.) Override with `VASM=/path VLINK=/path ./scripts/build.sh`.
 
+The free `mathtrans.library` build (`mathtrans/build.sh`) additionally needs the **m68k Amiga C toolchain** bundled with the VS Code **amiga-debug** extension (`bartmanabyss.amiga-debug`): `m68k-amiga-elf-gcc` + `vasmm68k_mot` under `bin/<platform>/opt/bin/`. Override with `M68K_GCC=/path` (and `VASM=`). If it is missing, `build.sh` falls back to `vendor/libs/mathtrans.library` and warns that the ADF is not redistributable.
+
 ## Build (what the script does)
 
 ```sh
@@ -43,7 +49,7 @@ vasmm68k_mot -m68000 -Fhunk -linedebug src/boing.s -o build/boing.o
 vlink -bamigahunk -Bstatic build/boing.o -o uae/dh0/boing
 ```
 
-`build.sh` then **stages the generated `uae/` run target** (git-ignored) from `src/assets/uae/` (skeleton: the `boing.fs-uae` and `boing.uae` configs, which are templates — `build.sh` substitutes the chosen default ROM filename for the `@@KICKSTART@@` token) + `vendor/` (ROMs → `uae/rom/` — `kick13.rom` always, `kick204.rom` if present; `mathtrans.library` → `uae/dh0/libs/`) + `src/assets/{boing.samples,Boing.info}` + the ~63 KB binary at `uae/dh0/boing`. (The assemble/link recipe is mirrored in `.vscode/tasks.json`, entrypoint `src/boing.s` — note that path expects `vendor/include` to exist.)
+`build.sh` then **stages the generated `uae/` run target** (git-ignored) from `src/assets/uae/` (skeleton: the `boing.fs-uae` and `boing.uae` configs, which are templates — `build.sh` substitutes the chosen default ROM filename for the `@@KICKSTART@@` token) + `vendor/` (ROMs → `uae/rom/` — `kick13.rom` always, `kick204.rom` if present) + `src/assets/{boing.samples,Boing.info}` + the ~63 KB binary at `uae/dh0/boing`. `mathtrans.library` in `uae/dh0/libs/` comes from `mathtrans/build.sh` (free/redistributable; see above). (The assemble/link recipe is mirrored in `.vscode/tasks.json`, entrypoint `src/boing.s` — note that path expects `vendor/include` to exist.)
 
 ## Run (FS-UAE)
 
