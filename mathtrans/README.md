@@ -2,12 +2,13 @@
 
 The Boing demo needs `mathtrans.library` at runtime (`SPSin`/`SPCos` for the
 sphere geometry). On a classic Amiga that library is a **disk** library — it is
-not in the Kickstart ROM — so a self-contained boot ADF has to carry a copy.
+not in the Kickstart ROM — so a self-contained boot disk (the FS-UAE run target
+in `uae/dh0/`, or an ADF made from it) has to carry a copy.
 
 Commodore/Hyperion's `mathtrans.library` is copyrighted and **not
-redistributable**, which means an ADF embedding it cannot be shared publicly.
+redistributable**, which means a disk embedding it cannot be shared publicly.
 This directory builds a **free replacement** with the same v1 API and the same
-LVO layout, so a built Boing ADF *can* be shared.
+LVO layout, so a Boing disk built from this repo *can* be shared.
 
 ## What this is
 
@@ -45,7 +46,7 @@ Override with `M68K_GCC=/path VASM=/path VLINK=/path`.
 `scripts/build.sh` builds this library automatically and stages it into the run
 target as `uae/dh0/libs/mathtrans.library` (falling back to the copyrighted
 `vendor/libs/mathtrans.library` only if this build is unavailable — in which
-case the resulting ADF is **not** redistributable). See
+case the distributed disk is **not** redistributable). See
 [docs/RUNNING.md](../docs/RUNNING.md).
 
 ## Notes / limitations

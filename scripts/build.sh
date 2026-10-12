@@ -99,7 +99,7 @@ if [ "${MATHTRANS_LIB:-free}" != vendor ] && [ -x mathtrans/build.sh ] && ./math
   have_mathtrans=1
 elif [ -f vendor/libs/mathtrans.library ]; then
   cp vendor/libs/mathtrans.library        uae/dh0/libs/mathtrans.library
-  echo "==> WARNING: using vendor/libs/mathtrans.library (copyrighted) - the ADF is NOT redistributable" >&2
+  echo "==> WARNING: using vendor/libs/mathtrans.library (copyrighted) - the run target is NOT redistributable" >&2
   have_mathtrans=1
 fi
 if [ "$have_mathtrans" -eq 0 ]; then

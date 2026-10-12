@@ -9,10 +9,10 @@ investigation log (kept so the dead ends are known).
 ## Goal
 
 `boing` needs `mathtrans.library` (`SPSin`/`SPCos` for the sphere geometry). It
-is a **disk** library (not in the Kickstart ROM), so a self-contained boot ADF
+is a **disk** library (not in the Kickstart ROM), so a self-contained boot disk
 must carry a copy. The original is copyrighted (Commodore/Hyperion) and not
 redistributable, so we build a **free replacement** with the same v1 API and the
-same LVO layout, so a built ADF can be shared publicly. See
+same LVO layout, so a Boing disk built from this repo can be shared publicly. See
 [`README.md`](README.md) and [`LICENSE`](LICENSE) (AROS Public License).
 
 ## Resolution
