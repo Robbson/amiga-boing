@@ -56,7 +56,7 @@ The build produces an FS-UAE **directory hard drive** (FS-UAE mounts `uae/dh0/` 
 
 `scripts/run.sh` launches FS-UAE with `uae/boing.fs-uae` — a fully self-contained config (ROM, disk, and `LIBS:` all repo-relative via `$CONFIG`). It boots an **A500 / 68000 / OCS** machine. The default Kickstart is **2.04 when that ROM is available, otherwise the required 1.3** (chosen by `build.sh` at stage time and baked into the config). The only external requirement is **FS-UAE itself**. Close the window to quit.
 
-Why 2.04 is preferred as the default: on Kickstart 2.0+ the boot shell is windowless, so the ball screen shows **immediately** (no Workbench/CLI screen to drag down — see the gotcha below), and the version-gated fix in [DEVIATIONS.md](DEVIATIONS.md) Deviation #2 keeps it at the full field rate. The original 1.3 environment is one flag away (next section).
+Why 2.04 is preferred as the default: on Kickstart 2.0+ the boot shell is windowless, so there is no separate Workbench/CLI screen at all, and the version-gated fix in [DEVIATIONS.md](DEVIATIONS.md) Deviation #2 keeps it at the full field rate. (The demo now brings its own screen to the **front** on both OSes — Deviation #3 — so Kickstart 1.3 also shows the ball immediately.) The original 1.3 environment is one flag away (next section).
 
 Run by hand per OS:
 
@@ -77,7 +77,7 @@ On Windows, `scripts/build.sh` / `run.sh` are bash — run them from **Git Bash*
 ./scripts/run.sh 13     # boots uae/rom/kick13.rom instead of 2.04
 ```
 
-`13` (also `1.3` / `--ks13`) is shorthand `run.sh` translates into `--kickstart_file=…/uae/rom/kick13.rom`; any other args still pass through to FS-UAE. On 1.3 the ball screen opens **behind** the boot Workbench/CLI screen — drag that screen's title bar down to reveal it (this is the original "polite" behaviour; see the gotcha below). `kick13.rom` is the required ROM, so it's always staged into `uae/rom/`. (If 2.04 isn't present it's already the default, and `13` is a no-op.)
+`13` (also `1.3` / `--ks13`) is shorthand `run.sh` translates into `--kickstart_file=…/uae/rom/kick13.rom`; any other args still pass through to FS-UAE. `kick13.rom` is the required ROM, so it's always staged into `uae/rom/`. (If 2.04 isn't present it's already the default, and `13` is a no-op.)
 
 ## Run (WinUAE, Windows)
 
@@ -95,12 +95,12 @@ A bare directory hard drive only gets `SYS:` from Kickstart (1.3 or 2.x) — not
 
 ## Deviations from the original AMICUS source
 
-`src/` stays close to the original disassembly with **two deliberate changes** — auto-start (the original starts paused) and a Kickstart 2.0+ frame-rate fix (keeps the demo at the native field rate — 50 Hz PAL / 60 Hz NTSC — on later OSes; KS1.x runs the original code path). The screen handling is original, so the ball screen opens in the **background**: drag the front CLI/Workbench screen's title bar down to reveal it. Rationale, exact locations, and how to re-verify: **[DEVIATIONS.md](DEVIATIONS.md)**.
+`src/` stays close to the original disassembly with **three deliberate changes** — auto-start; a Kickstart 2.0+ frame-rate fix; and bringing the ball screen to the **foreground** (the original called `ScreenToBack`, so it sat behind the CLI/Workbench). Rationale, exact locations, and how to re-verify: **[DEVIATIONS.md](DEVIATIONS.md)**.
 
 ## Symptom → cause cheat-sheet
 
-- **Boots to `AmigaDOS … Release 1.3` prompt, no ball** → expected: the ball screen opens in the **background**. Drag the CLI/Workbench screen's title bar **down** to reveal it. If dragging down shows an empty/garbage screen instead of the ball, then `boing` exited during init — check the `LIBS` mount in `uae/boing.fs-uae` (so `mathtrans.library` loads).
-  - **Why some setups show the ball directly (no Workbench in front):** `boing` always calls `ScreenToBack` on its screen, so it's visible only when **no other screen is open in front** of it. On a normal KS1.3 boot the startup shell's Workbench/CLI screen stays up front (hence "drag down to reveal"); a setup with nothing held in front (e.g. some A4000/KS3.x boots) shows boing immediately. It's the boot environment, not `boing` — the binary's *screen ordering* is identical either way. Bringing the ball forward is an environment concern, deliberately kept out of `boing`. (Animation *speed* is a separate matter: on KS2.0+ the demo would run at half rate without the version-gated fix in [DEVIATIONS.md](DEVIATIONS.md) Deviation #2.)
+- **Boots to `AmigaDOS … Release 1.3` prompt, no ball** → `boing` exited during init (it no longer hides behind the CLI — Deviation #3 brings its screen to the front). Check the `LIBS` mount in `uae/boing.fs-uae` (so `mathtrans.library` loads). At startup you briefly see the globe being built before the ball starts bouncing; that is normal.
+  - **Animation *speed* on Kickstart 2.0+:** without the version-gated fix in [DEVIATIONS.md](DEVIATIONS.md) Deviation #2 the demo would run at half rate; KS1.x is unaffected. (The PAL/NTSC tempo gap — PAL ≈ 0.83× NTSC — is unrelated.)
 - **`Illegal instruction: 4e7b at 00FCxxxx` in the FS-UAE log** → harmless. That's the Kickstart ROM's CPU-detection probe (`MOVEC`), not your code.
 - **Emulator quits instantly** → something ran `UAEquit` (`dh0/c/UAEquit`, a UAE helper that quits the emulator). The current `startup-sequence` is just `sys:boing` and does **not** call it; `boing` detaches from the CLI, so any command placed after `sys:boing` would execute immediately — don't put `UAEquit` there.
 - **Want NTSC (60 Hz) instead of PAL?** FS-UAE **forces PAL** for this A500 / KS1.3 setup — its model region quickstart overrides `ntsc = 1` (whether set in the config or as `--ntsc=1`), so the emulated Agnus stays PAL (227×312, 50 Hz). Don't chase the `ntsc=1` dead end. A genuine NTSC run would need an NTSC-region model (e.g. an A1000, which needs a bootstrap/WCS ROM we don't have). For timing work, record at PAL: the demo runs at the PAL field rate (~50 Hz, one step per field); a true NTSC run would be ~17 % faster (60/50) with identical per-step constants — see [ANIMATION-DETAILS.md](ANIMATION-DETAILS.md) §1.

@@ -39,7 +39,7 @@
 ;
 ;     _OpenScreen, _CloseScreen, _OpenWindow, _CloseWindow, _SetPointer,
 ;     _ClearPointer, _DisplayBeep, _MakeScreen, _RethinkDisplay,
-;     _ScreenToBack, ... (intuition.library)
+;     _ScreenToBack, _ScreenToFront, ... (intuition.library)
 ;
 ;     _SPSin, _SPCos, _SPAdd, _SPSub, _SPMul, _SPDiv, _SPFlt, _SPFix,
 ;     _SPNeg, _SPAbs, _SPTst, _SPCmp, jmp_so, jmp_do, ...
@@ -810,7 +810,7 @@ _FreeRaster         move.l     a6,-(sp)
 ; intuition.library wrappers. Same trampoline pattern, loading
 ; _IntuitionBase. See AMIGA-KNOWHOW.md section I for the LVO list. Used by
 ; this demo for: _OpenScreen, _CloseScreen, _OpenWindow, _CloseWindow,
-; _SetPointer, _ClearPointer, _ScreenToBack, _MakeScreen, _RethinkDisplay.
+; _SetPointer, _ClearPointer, _ScreenToFront, _MakeScreen, _RethinkDisplay.
 ;==============================================================================
                     SECTION    boing003EF4,CODE
 _ClearPointer       move.l     a6,-(sp)
@@ -852,6 +852,13 @@ _ScreenToBack       move.l     a6,-(sp)
                     move.l     (_IntuitionBase),a6
                     move.l     (8,sp),a0
                     jsr        (_LVOScreenToBack,a6)
+                    move.l     (sp)+,a6
+                    rts
+
+_ScreenToFront      move.l     a6,-(sp)
+                    move.l     (_IntuitionBase),a6
+                    move.l     (8,sp),a0
+                    jsr        (_LVOScreenToFront,a6)
                     move.l     (sp)+,a6
                     rts
 

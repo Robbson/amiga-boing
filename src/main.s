@@ -450,7 +450,7 @@ _main               link       a6,#-$00B2                   ; allocate locals (1
                     beq.w      .window_opened                        ; (no error handling)
 
 ;------------------------------------------------------------------------------
-; Phase 7 - send the screen behind Workbench, then cache pointers into the
+; Phase 7 - bring the screen to the FRONT, then cache pointers into the
 ; screen's RastPort / ViewPort / ColorMap / ColorTable.
 ;
 ; The "nasty poke" comments here (preserved from the disassembly) note that
@@ -463,7 +463,7 @@ _main               link       a6,#-$00B2                   ; allocate locals (1
 ; and the compiler caches it in A3 to avoid reloading every time.
 ;------------------------------------------------------------------------------
 .window_opened               move.l     (_myScreen),-(sp)
-                    jsr        (_ScreenToBack)              ; let Workbench cover us until ready
+                    jsr        (_ScreenToFront)             ; bring the ball to the front (Deviation #3; original used _ScreenToBack)
                     move.l     (_myScreen),a0
                     lea        (sc_RastPort,a0),a1          ;poking screen rastport.. nasty
                     move.l     a1,a3                        ; A3 = &Screen->RastPort (kept across loop)

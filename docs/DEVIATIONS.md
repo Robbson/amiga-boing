@@ -6,11 +6,15 @@
 
 An unmodified `src/` assembles **byte-for-byte identical** to `archive/boing_original.s` (Harry Sintonen's disassembly), and that in turn matches the rawer Amicus `archive/boing_s` modulo include-symbol spelling. The split into five files, the comments, and the relabeling change **zero instructions**.
 
-The repo deviates from that original in **two deliberate places** — auto-start (Deviation #1) and the Kickstart 2.0+ frame-rate fix (Deviation #2), both below. Deviation #1 is a single-value flip; Deviation #2 adds a small version-gated code block plus two library stubs, so a `src/`-built binary is no longer strictly byte-identical to `archive/` (see each section and "Re-verifying" below). `archive/` keeps the unmodified originals; **never edit `archive/`**, and don't "tidy" the disassembly's quirks away elsewhere — the quirks (overlapping globals, dead flags, the single chipset poke) are part of what's being preserved.
+The repo deviates from that original in **three deliberate places** — auto-start (Deviation #1), the Kickstart 2.0+ frame-rate fix (Deviation #2), and bringing the ball screen to the foreground (Deviation #3), all below. Deviation #1 is a single-value flip; Deviation #2 adds a small version-gated code block plus two library stubs; Deviation #3 swaps one intuition call-site and adds a one-line stub — so a `src/`-built binary is no longer strictly byte-identical to `archive/` (see each section and "Re-verifying" below). `archive/` keeps the unmodified originals; **never edit `archive/`**, and don't "tidy" the disassembly's quirks away elsewhere — the quirks (overlapping globals, dead flags, the single chipset poke) are part of what's being preserved.
 
-## Screen handling is unchanged (intentionally)
+## Deviation #3 — ball screen brought to the foreground (foreground start)
 
-The demo opens its own `CUSTOMSCREEN` with **no title bar / gadgets** and calls `ScreenToBack` ("let Workbench cover us until ready"), so it sits **in the background** — exactly the original "polite" design. Nothing brings it forward; you reveal it the authentic Amiga way, by **dragging the front (CLI/Workbench) screen's title bar down** (or via that screen's depth gadget). Making the ball visible is therefore an *environment* concern, deliberately kept out of `boing` — see [RUNNING.md](RUNNING.md).
+- **Where:** `src/main.s`, Phase 7 (`.window_opened`); plus a `_ScreenToFront` stub added in `src/runtime.s` (next to the existing `_ScreenToBack`).
+- **Original:** the demo opens its own `CUSTOMSCREEN` (no title bar / gadgets) and calls `ScreenToBack` ("let Workbench cover us until ready"), so it sits **in the background** — the original "polite" design. On Kickstart 1.x you had to drag the front (CLI/Workbench) screen's title bar **down** to reveal it. (On KS2.0+ the boot shell is windowless, so the ball screen was already the visible one.)
+- **Change:** call `ScreenToFront` instead of `ScreenToBack`, so the ball is shown immediately at launch. The rest of the screen handling — the custom screen and the direct `RastPort`/`ViewPort` pointer pokes — is unchanged.
+- **Effect:** on Kickstart 1.3 the demo now appears in the foreground at startup. You briefly see the globe being built (`_init_globe`) before the ball starts bouncing — that construction was always there, it was just hidden behind the CLI before.
+- **Byte-identity caveat:** like Deviation #2, this changes `src/` (one instruction + a stub), so a `src/`-built binary is not byte-identical to `archive/`. The now-unused `_ScreenToBack` wrapper is left in place (kept per the repo's no-tidying rule).
 
 ## Deviation #1 — auto-start (no pause-on-start)
 
@@ -35,7 +39,7 @@ Keeps the demo's intended **one-step-per-video-field** tempo when run on Kicksta
 
 ## Re-verifying the split is otherwise faithful
 
-Assemble the matching `archive/` original and `cmp` it against a `src/`-built binary. They now differ by **both** deviations above (auto-start, plus the KS2.0+ commit block and the `_MrgCop`/`_LoadView` stubs); to check the split alone, temporarily revert Deviation #2 (the commit block + the two stubs) and compare — what remains should differ only by the one-value auto-start flip. Note `archive/*.s` carry their own `INCDIR "include"`, so point them at the vendored NDK headers explicitly:
+Assemble the matching `archive/` original and `cmp` it against a `src/`-built binary. They now differ by **all three** deviations above (auto-start; the KS2.0+ commit block and the `_MrgCop`/`_LoadView` stubs; and the `_ScreenToFront` swap + its stub); to check the split alone, temporarily revert Deviations #2 and #3 and compare — what remains should differ only by the one-value auto-start flip. Note `archive/*.s` carry their own `INCDIR "include"`, so point them at the vendored NDK headers explicitly:
 
 ```sh
 vasmm68k_mot -m68000 -Fhunk -I vendor/include archive/boing_original.s -o /tmp/orig.o
